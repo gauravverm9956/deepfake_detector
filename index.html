@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veridex – Deepfake Detection</title>
+<meta name="description" content="A browser-based media inspection prototype for reviewing image, video, and audio signals. Results are estimates, not proof.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#fff;--card:#eee;--ink:#0f1110;--mut:#7a7d7b;--ln:#d9dad9;--lime:#a6f04b;--pk:#f8b8f5;--dk:#14201c;--wh:#fff;--hot:#ff3da6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0e0d;--card:#181c1a;--ink:#f3f4f3;--mut:#9aa09c;--ln:#2a2f2c;--wh:#242927;--dk:#0f1a16}}
+:root[data-theme="dark"]{--bg:#0b0e0d;--card:#181c1a;--ink:#f3f4f3;--mut:#9aa09c;--ln:#2a2f2c;--wh:#242927;--dk:#0f1a16}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+.w{max-width:1120px;margin:0 auto;padding:0 16px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;position:relative}
+.logo{display:flex;align-items:center;gap:8px;font-size:24px;font-weight:600;letter-spacing:-.03em}
+.logo sup{font-size:11px;font-weight:500}
+nav{display:none;gap:6px}
+nav a{padding:8px 14px;border-radius:99px;font-weight:500;font-size:15px}
+nav a:hover{background:var(--card)}
+.burger{width:48px;height:48px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.menu{display:none;position:absolute;right:0;top:68px;background:var(--card);border-radius:24px;padding:8px;z-index:5;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.menu.open{display:block}
+.menu a{display:block;padding:12px 16px;border-radius:16px;font-weight:500}
+.menu a:hover{background:var(--wh)}
+.hero{background:var(--card);border-radius:32px;padding:40px 18px 32px;text-align:center;position:relative;overflow:hidden;display:grid;gap:32px}
+.hero::before,.hero::after{content:"";position:absolute;top:0;bottom:0;width:1px;background:var(--ln);opacity:.7}
+.hero::before{left:7%}.hero::after{right:7%}
+.hero>*{position:relative;z-index:1}
+.pill{display:inline-flex;align-items:center;gap:10px;background:var(--wh);border-radius:99px;padding:9px 22px;font-weight:500;font-size:15px}
+.pill::before,.pill::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink)}
+h1{font-size:clamp(38px,9.5vw,76px);line-height:1.05;letter-spacing:-.035em;font-weight:600;margin:22px 0 20px}
+.tok{display:inline-flex;align-items:center;gap:8px;background:var(--dk);color:#fff;border-radius:99px;padding:0 16px 0 6px;height:.62em;min-height:34px;vertical-align:.06em;font-size:.5em}
+.tok b{width:26px;height:26px;border-radius:50%;background:var(--lime);color:#0f1110;display:grid;place-items:center;font-size:15px}
+.sub{font-size:clamp(17px,4.4vw,21px);line-height:1.75;color:var(--mut);max-width:560px;margin:0 auto 26px;font-weight:500}
+.chip{display:inline-block;padding:0 12px;border-radius:12px;line-height:1.5;color:var(--ink);margin:2px 0}
+.chip.pk{background:var(--pk);color:#0f1110}.chip.wh{background:var(--wh)}.chip.bk{background:var(--ink);color:var(--bg)}
+.btns{display:flex;flex-direction:column;align-items:center;gap:14px}
+.btn{display:inline-flex;align-items:center;gap:18px;border-radius:99px;border:1.5px solid var(--ink);background:transparent;padding:16px 30px;font-weight:500;font-size:17px;min-height:56px}
+.btn.fill{background:var(--ink);color:var(--bg);padding:8px 8px 8px 28px;box-shadow:0 14px 28px rgba(0,0,0,.28)}
+.btn.fill i{width:42px;height:42px;border-radius:50%;background:var(--bg);color:var(--ink);display:grid;place-items:center}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn.sm{padding:9px 18px;font-size:14px;min-height:40px}
+.dk{background:var(--dk);color:#fff;border-radius:32px;padding:26px;position:relative;text-align:left;width:100%;max-width:440px;margin:0 auto;border:1px solid rgba(255,255,255,.06)}
+.dk::after{content:"";position:absolute;inset:12px;border:1px solid rgba(255,255,255,.08);border-radius:22px;pointer-events:none}
+.dots{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:22px}
+.dots i{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.1);transition:background .4s}
+.dots i.on{background:var(--lime)}
+.dk .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dk .big{border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:12px;margin-bottom:14px}
+.dk .big b{font-size:48px;line-height:1;font-weight:600;letter-spacing:-.03em}
+.dk .big span,.dk .sm span{color:#a9b3ae;font-size:15px}
+.dk h3{font-size:22px;line-height:1.25;font-weight:600;margin:0 0 22px;letter-spacing:-.01em}
+.pkt{color:var(--pk);font-size:20px;font-weight:600}
+.bars{display:flex;align-items:flex-end;gap:7px;height:64px;margin-top:14px}
+.bars i{flex:1;background:rgba(255,255,255,.1);border-radius:8px;transition:height .5s}
+.bars i.hi{background:var(--pk)}
+.trust{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--mut);font-weight:500;text-align:left;font-size:16px;line-height:1.3}
+.av{display:flex}.av i{width:44px;height:44px;border-radius:50%;border:3px solid var(--card);margin-left:-10px}
+.av i:nth-child(1){background:linear-gradient(135deg,#a6f04b,#2f7d52);margin:0}.av i:nth-child(2){background:linear-gradient(135deg,#f8b8f5,#8a3f9c)}.av i:nth-child(3){background:linear-gradient(135deg,#ffd29c,#a35a2d)}
+section{padding:56px 0 0}
+h2{font-size:clamp(30px,6.5vw,52px);letter-spacing:-.03em;line-height:1.08;margin:0 0 12px;font-weight:600}
+.lead{color:var(--mut);font-weight:500;font-size:18px;max-width:560px;margin:0 0 24px}
+.card{background:var(--card);border-radius:28px;padding:22px}
+.drop{border:2px dashed var(--ln);border-radius:24px;background:var(--wh);padding:34px 18px;text-align:center;transition:border-color .2s,background .2s}
+.drop.over{border-color:var(--ink)}
+.drop p{margin:6px 0 0;color:var(--mut);font-size:15px}
+.drop h3{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0 4px}
+.prev{margin-top:18px;display:none;gap:16px;align-items:center;flex-wrap:wrap}
+.prev.on{display:flex}
+.prev .m{width:140px;height:100px;border-radius:16px;overflow:hidden;background:var(--dk);flex:none}
+.prev img,.prev video{width:100%;height:100%;object-fit:cover;display:block}
+.prev audio{width:140px;margin:30px 0}
+.prev .i{flex:1;min-width:160px;overflow-wrap:anywhere}
+.prev .i b{display:block;font-weight:600}.prev .i span{color:var(--mut);font-size:14px}
+.prog{display:none;margin-top:18px}.prog.on{display:block}
+.prog .t{height:10px;border-radius:9px;background:var(--wh);overflow:hidden}
+.prog .t i{display:block;height:100%;width:0;background:var(--ink);border-radius:9px;transition:width .35s}
+.prog p{margin:8px 0 0;font-weight:500;font-size:15px}
+.err{display:none;margin-top:14px;background:var(--pk);color:#0f1110;border-radius:16px;padding:12px 16px;font-weight:500}.err.on{display:block}
+#out{display:none;margin-top:22px;gap:18px}#out.on{display:grid}
+.grid2{display:grid;gap:18px}
+.ev canvas{width:100%;height:auto;border-radius:18px;display:block;background:var(--dk)}
+.ev .cap{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;color:var(--mut);font-size:14px;font-weight:500}
+.fx{display:grid;gap:14px;margin:0;padding:0;list-style:none}
+.fx li{background:var(--wh);border-radius:20px;padding:16px 18px}
+.fx .h{display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.fx p{margin:4px 0 10px;color:var(--mut);font-size:14.5px}
+.meter{height:8px;border-radius:8px;background:var(--card);overflow:hidden}.meter i{display:block;height:100%;background:var(--ink);border-radius:8px}.meter i.hi{background:var(--hot)}
+.lv{font-size:13px;padding:2px 10px;border-radius:99px;background:var(--card);font-weight:500;white-space:nowrap}
+.lv.hi{background:var(--pk);color:#0f1110}
+.rp p{margin:0 0 12px;font-size:17px}
+.rp .v{display:inline-block;padding:4px 14px;border-radius:99px;background:var(--lime);color:#0f1110;font-weight:600;margin-bottom:12px}
+.rp .v.x{background:var(--pk)}
+.rp small{color:var(--mut);display:block;line-height:1.5}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stat{background:var(--wh);border-radius:22px;padding:18px}
+.stat b{display:block;font-size:38px;line-height:1;letter-spacing:-.03em;font-weight:600}.stat span{color:var(--mut);font-weight:500;font-size:14px}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hist li{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--wh);border-radius:18px;padding:14px 16px}
+.hist .n{min-width:0}.hist .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.hist .n span{color:var(--mut);font-size:13px}
+.hist .r{text-align:right;white-space:nowrap;font-weight:600;font-size:14px}
+.empty{color:var(--mut);padding:18px;text-align:center;font-weight:500}
+.how{display:grid;gap:14px}
+.how .card h3{margin:14px 0 6px;font-size:22px;letter-spacing:-.02em}.how .card p{margin:0;color:var(--mut);font-weight:500}
+.how .ic{width:48px;height:48px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:600}
+footer{padding:48px 0 40px;color:var(--mut);font-size:14px;font-weight:500;max-width:760px}
+@media(min-width:760px){nav{display:flex}.burger,.menu{display:none!important}.btns{flex-direction:row;justify-content:center}.grid2{grid-template-columns:420px 1fr}.how{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:repeat(4,1fr)}.hero{padding:56px 40px}}
+@media(min-width:980px){.hero{grid-template-columns:1.25fr 1fr;text-align:left;align-items:center;padding:56px}.hero .sub{margin-left:0}.btns{justify-content:flex-start}.trust{justify-content:flex-start}.hero::before,.hero::after{display:none}}
+.hero{background:radial-gradient(55% 45% at 88% 8%,rgba(166,240,75,.3),transparent 70%),radial-gradient(50% 40% at 6% 100%,rgba(248,184,245,.4),transparent 70%),var(--card)}
+h1{font-weight:700;letter-spacing:-.04em}
+.card{box-shadow:0 18px 40px -26px rgba(0,0,0,.3)}
+.fx li,.stat,.hist li{box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.btn{transition:transform .2s,box-shadow .2s}.btn:hover{transform:translateY(-2px)}
+.tick{overflow:hidden;margin-top:14px;border-radius:99px;background:var(--ink);color:var(--bg);padding:13px 0;white-space:nowrap}
+.tick div{display:inline-flex;gap:36px;padding-left:36px;animation:mq 30s linear infinite;font-weight:500;font-size:15px}
+@keyframes mq{to{transform:translateX(-50%)}}
+details{background:var(--card);border-radius:22px;padding:2px 22px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600;font-size:18px;padding:16px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:24px;line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin:0 0 16px;color:var(--mut);font-weight:500}
+@media(prefers-reduced-motion:reduce){.tick div{animation:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<header>
+ <a class="logo" href="#top" aria-label="Veridex home"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="17" fill="#2fa37a"/><path d="M17 7c5 3 8 7 8 12-3 .5-6 0-8-2-2 2-5 2.500-8 2 0-5 3-9 8-12z" fill="#fff"/><path d="M17 12v14" stroke="#2fa37a" stroke-width="2"/></svg>Veridex<sup>®</sup></a>
+ <nav aria-label="Main"><a href="#analyze">Analyze</a><a href="#dashboard">Dashboard</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+ <button class="burger" id="bg" aria-label="Open menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+ <div class="menu" id="mn"><a href="#analyze">Analyze</a><a href="#dashboard">Dashboard</a><a href="#how">How it works</a><a href="#faq">FAQ</a></div>
+</header>
+
+<main id="top">
+<div class="hero">
+ <div>
+  <span class="pill">Deepfake detector, built for the feed</span>
+  <h1>Real or <span class="tok"><b>?</b>›››</span> cap? Check it before you repost.</h1>
+  <p class="sub">Drop a <span class="chip pk">pic,</span> <span class="chip wh">vid,</span> or <span class="chip bk">voice note</span> and get a verdict, the receipts, and a report your group chat can actually understand.</p>
+  <div class="btns">
+   <a class="btn fill" href="#analyze">Scan a file <i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></i></a>
+   <a class="btn" href="#how">See how it works</a>
+  </div>
+ </div>
+ <div>
+  <div id="heroCard"></div>
+  <div class="trust" style="margin-top:22px"><div class="av"><i></i><i></i><i></i></div><span>Runs entirely in your browser.<br>Your files never leave your device.</span></div>
+ </div>
+</div>
+
+<div class="tick" aria-hidden="true"><div><span>✦ receipts included</span><span>✦ no cap, just signals</span><span>✦ your files never leave your device</span><span>✦ plain-English reports</span><span>✦ receipts included</span><span>✦ no cap, just signals</span><span>✦ your files never leave your device</span><span>✦ plain-English reports</span></div></div>
+<section id="analyze">
+ <h2>Check a file in seconds</h2>
+ <p class="lead">Drop an image, video, or audio clip. You get a verdict, a confidence score, the evidence behind it, and a report anyone can read.</p>
+ <div class="card">
+  <div class="drop" id="drop">
+   <h3>Drop a file here</h3>
+   <p>JPG, PNG, WebP · MP4, WebM, MOV · MP3, WAV, M4A, OGG</p>
+   <div class="tabs"><button class="btn sm fill" id="pick" style="padding:9px 22px">Choose file</button><button class="btn sm" id="demo">Try a sample image</button></div>
+   <input type="file" id="file" accept="image/*,video/*,audio/*" hidden>
+  </div>
+  <div class="prev" id="prev"><div class="m" id="pm"></div><div class="i"><b id="pn"></b><span id="ps"></span></div><button class="btn fill" id="go" style="padding:8px 8px 8px 24px">Run analysis <i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></i></button></div>
+  <div class="prog" id="prog" role="status" aria-live="polite"><div class="t"><i id="pb"></i></div><p id="pt"></p></div>
+  <div class="err" id="err" role="alert"></div>
+ </div>
+ <div id="out">
+  <div class="grid2"><div id="rc"></div><div class="card ev"><canvas id="cv" width="600" height="360"></canvas><div class="cap"><span id="cc"></span><button class="btn sm" id="tg" hidden>Hide highlights</button></div></div></div>
+  <div class="card"><h2 style="font-size:28px">Why we reached this verdict</h2><ul class="fx" id="fx"></ul></div>
+  <div class="card rp"><h2 style="font-size:28px">Plain-language report</h2><div id="rp"></div><button class="btn sm" id="cp">Copy report</button></div>
+ </div>
+</section>
+
+<section id="dashboard">
+ <h2>Detection history</h2>
+ <p class="lead">Every analysis is saved on this device so you can review earlier results.</p>
+ <div class="card">
+  <div class="stats" id="st"></div>
+  <ul class="hist" id="hl"></ul>
+  <div style="margin-top:16px"><button class="btn sm" id="clr">Clear history</button></div>
+ </div>
+</section>
+
+<section id="how">
+ <h2>How the checks work</h2>
+ <p class="lead">Each file type gets its own set of signal checks. Results are combined into one verdict.</p>
+ <div class="how">
+  <div class="card"><div class="ic">1</div><h3>Images</h3><p>Re-compression consistency finds regions edited after capture, noise texture flags over-smooth AI output, and file metadata reveals generator or editor tags.</p></div>
+  <div class="card"><div class="ic">2</div><h3>Video</h3><p>Frames are sampled across the clip and checked like images. Flicker in texture between frames is a common sign of face-swaps and re-rendering.</p></div>
+  <div class="card"><div class="ic">3</div><h3>Audio</h3><p>Background noise floor, spectral variation, high-frequency content, and abrupt edits are drawn on a spectrogram to expose synthetic or spliced speech.</p></div>
+ </div>
+</section>
+<section id="faq">
+ <h2>Questions people ask</h2>
+ <p class="lead">Straight answers, no jargon.</p>
+ <details><summary>Is my file uploaded anywhere?</summary><p>No. Everything runs in your browser. Your history is saved only on this device and you can clear it any time.</p></details>
+ <details><summary>What do the three verdicts mean?</summary><p>Likely Authentic means no strong signs of tampering. AI-Generated means the file has patterns typical of synthetic creation. Manipulated means real media that looks edited, spliced, or swapped.</p></details>
+ <details><summary>How accurate is it?</summary><p>This prototype uses transparent signal checks and gives estimates, not proof. Strong results are a good reason to look closer. Trained face-swap and voice-clone models are the next upgrade.</p></details>
+ <details><summary>Why was my real photo flagged?</summary><p>Screenshots, filters, and social-media re-saves strip camera data and add edit-like traces. Try the original file straight from the camera.</p></details>
+ <details><summary>Which files work?</summary><p>Images (JPG, PNG, WebP), video (MP4, WebM), and audio (MP3, WAV, M4A, OGG) up to 150 MB. Audio analysis covers the first 60 seconds.</p></details>
+ <details><summary>What should I do with a suspicious result?</summary><p>Don’t share it yet. Find the original source, check whether trusted outlets have it, and ask the sender where it came from.</p></details>
+</section>
+</main>
+<footer>Veridex is a working prototype. It uses transparent signal analysis, not a trained deepfake model, so results are estimates to guide review and not proof. Face-swap, lip-sync, and voice-clone classifiers are the next modules to add. Always confirm important findings with a trusted source.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),mk=(w,h)=>{const c=document.createElement("canvas");c.width=w;c.height=h;return c},tick=()=>new Promise(r=>setTimeout(r,30)),cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mean=a=>a.reduce((s,x)=>s+x,0)/(a.length||1),sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))},cv=a=>sd(a)/(mean(a)+1e-9);
+let file=null,kind=null,url=null,last=null,heat=true,busy=false,mem=[];
+try{mem=JSON.parse(localStorage.getItem("vx_h")||"[]")}catch(e){mem=[]}
+const save=()=>{try{localStorage.setItem("vx_h",JSON.stringify(mem))}catch(e){}};
+/* menu */
+$("#bg").onclick=()=>{const o=$("#mn").classList.toggle("open");$("#bg").setAttribute("aria-expanded",o)};
+$("#mn").onclick=()=>{$("#mn").classList.remove("open");$("#bg").setAttribute("aria-expanded",false)};
+/* cards */
+const card=r=>`<div class="dk"><div class="dots">${Array.from({length:21},(_,i)=>`<i class="${i<Math.round(r.conf/100*21)?"on":""}"></i>`).join("")}</div><div class="row big"><b>${r.conf}%</b><span>Confidence</span></div><h3>${r.title}</h3><div class="row sm"><span>${r.barLabel}</span><b class="pkt">${r.verdict}</b></div><div class="bars">${r.bars.map(v=>`<i class="${v>.6?"hi":""}" style="height:${Math.round(18+v*82)}%"></i>`).join("")}</div></div>`;
+$("#heroCard").innerHTML=card({conf:92,title:"Built for evidence, clarity, and plain-language reports",barLabel:"Example output",verdict:"Manipulated",bars:[.2,.3,.25,.8,.95,.9,.3,.2,.35,.25,.2,.3]});
+/* file handling */
+const drop=$("#drop");
+$("#pick").onclick=()=>$("#file").click();
+$("#file").onchange=e=>{if(e.target.files[0])setFile(e.target.files[0]);e.target.value=""};
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)setFile(f)});
+const fmt=b=>b>1e6?(b/1e6).toFixed(1)+" MB":Math.max(1,Math.round(b/1e3))+" KB";
+function showErr(m){const e=$("#err");e.textContent=m;e.classList.toggle("on",!!m)}
+function setFile(f){
+ if(busy)return;showErr("");
+ const k=f.type.startsWith("image/")?"image":f.type.startsWith("video/")?"video":f.type.startsWith("audio/")?"audio":null;
+ if(!k)return showErr("This file type isn’t supported. Choose an image, video, or audio file.");
+ if(f.size>150e6)return showErr("This file is over 150 MB. Choose a smaller file.");
+ if(url)URL.revokeObjectURL(url);
+ file=f;kind=k;url=URL.createObjectURL(f);
+ $("#pm").innerHTML=k==="image"?`<img src="${url}" alt="">`:k==="video"?`<video src="${url}" muted playsinline preload="metadata"></video>`:`<audio src="${url}" controls></audio>`;
+ $("#pn").textContent=f.name;$("#ps").textContent=k+" · "+fmt(f.size);
+ $("#prev").classList.add("on");$("#out").classList.remove("on");
+}
+$("#demo").onclick=()=>{ /* synthetic smooth gradient image: demonstrates an AI-style result */
+ const c=mk(640,420),x=c.getContext("2d"),g=x.createLinearGradient(0,0,640,420);g.addColorStop(0,"#6a8cff");g.addColorStop(.5,"#f8b8f5");g.addColorStop(1,"#a6f04b");x.fillStyle=g;x.fillRect(0,0,640,420);
+ const r=x.createRadialGradient(320,200,10,320,200,150);r.addColorStop(0,"#ffe3c9");r.addColorStop(1,"rgba(255,227,201,0)");x.fillStyle=r;x.fillRect(0,0,640,420);
+ c.toBlob(b=>setFile(new File([b],"sample-smooth-render.png",{type:"image/png"})),"image/png");
+};
+/* progress */
+function step(i,n,t){$("#pb").style.width=Math.round((i+1)/n*100)+"%";$("#pt").textContent=t;return tick()}
+/* image analysis */
+const loadImg=()=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("This image couldn’t be decoded. Try a JPG, PNG, or WebP file."));i.src=url});
+const reJpeg=(c,q)=>new Promise(r=>c.toBlob(b=>{if(!b)return r(null);const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{const k=mk(c.width,c.height);k.getContext("2d").drawImage(i,0,0);URL.revokeObjectURL(u);r(k)};i.onerror=()=>r(null);i.src=u},"image/jpeg",q));
+async function metrics(c){
+ const w=c.width,h=c.height,A=c.getContext("2d").getImageData(0,0,w,h).data,re=await reJpeg(c,.8);
+ const B=re?re.getContext("2d").getImageData(0,0,w,h).data:null,bs=32,gx=Math.ceil(w/bs),gy=Math.ceil(h/bs);
+ const g=new Float32Array(w*h);for(let i=0;i<w*h;i++)g[i]=.299*A[4*i]+.587*A[4*i+1]+.114*A[4*i+2];
+ const e=new Float32Array(gx*gy),n=new Float32Array(gx*gy),k=new Float32Array(gx*gy);
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,b=(y/bs|0)*gx+(x/bs|0);
+  n[b]+=Math.abs(g[i]-(g[i-1]+g[i+1]+g[i-w]+g[i+w])/4);k[b]++;
+  if(B)e[b]+=(Math.abs(A[4*i]-B[4*i])+Math.abs(A[4*i+1]-B[4*i+1])+Math.abs(A[4*i+2]-B[4*i+2]))/3}
+ for(let b=0;b<e.length;b++){const q=k[b]||1;e[b]/=q;n[b]/=q}
+ const E=[...e],N=[...n],em=mean(E),es=sd(E);
+ return{ela:em,elaCv:cv(E),noise:mean(N),noiseCv:cv(N),be:E,z:E.map(v=>(v-em)/(es+1e-9)),gx,gy,bs,c,hasRe:!!B};
+}
+function scoreImg(m,meta,T){
+ const smooth=cl((T-m.noise)/T),uni=cl((.35-m.noiseCv)/.35),ela=cl((m.elaCv-.45)/.6);
+ const s=cl(.45*smooth+.25*uni+(meta.gen?.6:0)),mp=cl(.7*ela+(meta.editor?.35:0));
+ return{s,m:mp,smooth,uni,ela};
+}
+async function readMeta(){
+ const t=new TextDecoder("latin1").decode(await file.slice(0,300000).arrayBuffer());
+ return{gen:/midjourney|dall.?e|stable.?diffusion|firefly|sdxl|comfyui|trainedAlgorithmicMedia|synthid/i.test(t),editor:/photoshop|adobe|gimp|canva|snapseed|lightroom|faceapp|facetune|pixlr/i.test(t),exif:t.includes("Exif"),c2pa:/c2pa|jumbf/i.test(t),jpeg:/jpe?g/.test(file.type)};
+}
+const lvl=v=>v<.33?["Low",""]:v<.66?["Medium",""]:["High","hi"];
+const factor=(name,d,v)=>({name,d,v:cl(v)});
+function verdict(s,m){const mx=Math.max(s,m);return mx<.35?["Likely Authentic",Math.round(Math.min(96,55+40*(1-mx/.35)))]:[s>=m?"AI-Generated":"Manipulated",Math.round(Math.min(96,50+45*cl((mx-.35)/.5)))]}
+const titles={"Likely Authentic":"No strong signs of manipulation","AI-Generated":"Patterns typical of AI generation","Manipulated":"Signs of editing or splicing"};
+function build(o){const[v,conf]=verdict(o.s,o.m);return{...o,verdict:v,conf,title:titles[v]}}
+async function runImage(){
+ const n=4;await step(0,n,"Reading file metadata…");const meta=await readMeta(),im=await loadImg(),sc=Math.min(1,512/Math.max(im.naturalWidth,im.naturalHeight)),c=mk(Math.max(8,Math.round(im.naturalWidth*sc)),Math.max(8,Math.round(im.naturalHeight*sc)));
+ c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+ await step(1,n,"Checking compression consistency…");const m=await metrics(c);
+ await step(2,n,"Measuring noise and texture…");const sc2=scoreImg(m,meta,2.2);
+ await step(3,n,"Scoring and writing report…");
+ const mt=meta.gen?"An AI image-generator tag was found in the file’s metadata.":meta.editor?"Editing-software tags were found in the file’s metadata.":meta.c2pa?"Content-credential markers are present, which supports a traceable origin.":meta.exif?"Camera data is present, which is typical of real photos.":"No camera data was found. Screenshots, social-media copies and AI images often look like this.";
+ const col=Array.from({length:12},(_,i)=>{let a=[];for(let y=0;y<m.gy;y++)a.push(m.be[y*m.gx+Math.min(m.gx-1,Math.floor(i*m.gx/12))]);return mean(a)}),cm=mean(col),cs=sd(col)+1e-9;
+ const top=Math.max(sc2.s,sc2.m),bars=col.map(v=>cl((cl((v-cm)/(2*cs)+.5)*Math.max(.35,top+.2))));
+ return build({s:sc2.s,m:sc2.m,barLabel:"Suspicion across image width",bars,ev:{type:"img",c,m},
+  factors:[factor("Compression consistency","Checks whether all regions respond to re-compression the same way. Edited areas often differ.",sc2.ela),factor("Texture and noise","Real cameras leave fine natural grain. AI images are often unusually smooth.",sc2.smooth),factor("Noise uniformity","AI images often have grain that is too even across the whole frame.",sc2.uni),factor("Metadata and provenance",mt,meta.gen?1:meta.editor?.6:meta.exif||meta.c2pa?.05:(meta.jpeg?.3:.15))]});
+}
+/* video */
+async function runVideo(){
+ const n=5;await step(0,n,"Loading video…");
+ const v=document.createElement("video");v.muted=true;v.playsInline=true;v.preload="auto";v.src=url;
+ await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=()=>rej(new Error("This video couldn’t be decoded in your browser. Try an MP4 (H.264) or WebM file."));setTimeout(()=>rej(new Error("The video took too long to load. Try a shorter clip.")),20000)});
+ const d=isFinite(v.duration)&&v.duration>0?v.duration:1,F=10,fr=[],sc=Math.min(1,384/Math.max(v.videoWidth,v.videoHeight));
+ await step(1,n,"Sampling frames…");
+ for(let i=0;i<F;i++){await new Promise(r=>{const to=setTimeout(r,4000);v.onseeked=()=>{clearTimeout(to);r()};v.currentTime=Math.min(d-.05,d*(i+.5)/F)});
+  const c=mk(Math.max(8,Math.round(v.videoWidth*sc)),Math.max(8,Math.round(v.videoHeight*sc)));c.getContext("2d").drawImage(v,0,0,c.width,c.height);fr.push(c);}
+ await step(2,n,"Analyzing each frame…");const ms=[];for(const c of fr)ms.push(await metrics(c));
+ await step(3,n,"Checking consistency between frames…");
+ const per=ms.map(m=>scoreImg(m,{},.9)),ns=ms.map(m=>m.noise),es=ms.map(m=>m.ela);
+ const temp=cl((Math.max(cv(ns),cv(es))-.12)/.3),S=mean(per.map(p=>p.s)),M=cl(mean(per.map(p=>p.m))*.7+temp*.5);
+ await step(4,n,"Scoring and writing report…");
+ const sus=per.map((p,i)=>Math.max(p.s,p.m,temp*.8)),w=sus.indexOf(Math.max(...sus));
+ return build({s:S,m:M,barLabel:"Suspicion per frame",bars:sus,ev:{type:"img",c:fr[w],m:ms[w],cap:"Most suspicious frame (frame "+(w+1)+" of "+F+")"},
+  factors:[factor("Compression consistency","Regions that react differently to re-compression can point to pasted or swapped content.",mean(per.map(p=>p.ela))),factor("Texture and noise","Over-smooth frames are common in generated or heavily re-rendered video.",mean(per.map(p=>p.smooth))),factor("Temporal consistency","Natural footage keeps steady texture from frame to frame. Flicker is typical of face-swaps.",temp)]});
+}
+/* audio */
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}for(let l=2;l<=n;l<<=1){const a=-2*Math.PI/l,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=l){let cr=1,ci=0;for(let k=0;k<l/2;k++){const u=i+k,v=u+l/2,tr=re[v]*cr-im[v]*ci,ti=re[v]*ci+im[v]*cr;re[v]=re[u]-tr;im[v]=im[u]-ti;re[u]+=tr;im[u]+=ti;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+async function runAudio(){
+ const n=4;await step(0,n,"Decoding audio…");
+ const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw new Error("Your browser can’t decode audio. Try Chrome, Edge, Safari or Firefox.");
+ const ac=new AC();let buf;try{buf=await ac.decodeAudioData(await file.arrayBuffer())}catch(e){throw new Error("This audio couldn’t be decoded. Try an MP3, WAV, or M4A file.")}finally{try{ac.close()}catch(e){}}
+ const sr=buf.sampleRate,x=buf.getChannelData(0).subarray(0,Math.min(buf.length,sr*60)),N=1024,F=120;
+ if(x.length<N*8)throw new Error("This audio is too short. Use a clip of at least one second.");
+ await step(1,n,"Measuring noise floor…");
+ const rms=[];for(let o=0;o+N<=x.length;o+=N){let s=0;for(let i=0;i<N;i++)s+=x[o+i]**2;rms.push(Math.sqrt(s/N))}
+ const so=[...rms].sort((a,b)=>a-b),p5=so[Math.floor(so.length*.05)];
+ await step(2,n,"Building spectrogram…");
+ const spec=[],fl=[],flux=[];let prev=null,tot=0,hf=0;const hk=Math.floor(7000/(sr/2)*(N/2));
+ for(let f=0;f<F;f++){const o=Math.floor(f*(x.length-N)/(F-1)),re=new Float32Array(N),im=new Float32Array(N);
+  for(let i=0;i<N;i++)re[i]=x[o+i]*(.5-.5*Math.cos(2*Math.PI*i/(N-1)));fft(re,im);
+  const mag=new Float32Array(N/2);let lg=0,am=0;for(let k=0;k<N/2;k++){mag[k]=Math.hypot(re[k],im[k]);lg+=Math.log(mag[k]+1e-9);am+=mag[k];tot+=mag[k]**2;if(k>=hk)hf+=mag[k]**2}
+  fl.push(Math.exp(lg/(N/2))/(am/(N/2)+1e-9));
+  const row=[];for(let b=0;b<64;b++){let s=0;for(let k=0;k<8;k++)s+=mag[b*8+k];row.push(s/8)}spec.push(row);
+  if(prev){let s=0;for(let k=0;k<N/2;k++)s+=Math.abs(Math.log1p(mag[k]*100)-Math.log1p(prev[k]*100));flux.push(s/(N/2))}prev=mag}
+ await step(3,n,"Scoring and writing report…");
+ const fm=mean(flux),fs=sd(flux)+1e-9,out=new Set();flux.forEach((v,i)=>{if((v-fm)/fs>3.5)out.add(i+1)});
+ const floor=cl(1-p5/.0015),flat=cl((.05-sd(fl))/.05),hfs=sr>=32000?cl((.0005-hf/(tot+1e-12))/.0005):.25,spl=cl((out.size-1)/4);
+ const s=cl(.4*floor+.3*flat+.3*hfs),m=cl(spl*.9),segs=12,bars=[];
+ for(let i=0;i<segs;i++){const a=flux.slice(Math.floor(i*flux.length/segs),Math.floor((i+1)*flux.length/segs));bars.push(cl(Math.max(...a,0)/(fm+4*fs)))}
+ return build({s,m,barLabel:"Segment inconsistency",bars,ev:{type:"aud",spec,out,cap:"Spectrogram (time →, pitch ↑). Pink marks show abrupt jumps."},
+  factors:[factor("Background noise floor","Real recordings carry faint room noise. Perfect digital silence is common in synthetic speech.",floor),factor("Spectral variation","Human voices change in rich, uneven ways. Over-regular spectra can indicate a voice model.",flat),factor("High-frequency content",sr>=32000?"Some voice generators leave the top of the spectrum empty.":"This file’s sample rate is low, so this check carries little weight.",hfs),factor("Abrupt edits","Sudden spectral jumps can show where clips were cut together or replaced.",spl)]});
+}
+/* run */
+$("#go").onclick=async()=>{
+ if(busy||!file)return;busy=true;showErr("");$("#go").disabled=true;$("#out").classList.remove("on");$("#prog").classList.add("on");$("#pb").style.width="0";
+ try{const r=kind==="image"?await runImage():kind==="video"?await runVideo():await runAudio();r.kind=kind;r.name=file.name;show(r);
+  mem.unshift({id:Date.now(),name:file.name,kind,verdict:r.verdict,conf:r.conf,t:Date.now(),size:file.size});mem=mem.slice(0,50);save();dash()}
+ catch(e){showErr(e&&e.message?e.message:"Something went wrong during analysis. Try another file.")}
+ finally{busy=false;$("#go").disabled=false;$("#prog").classList.remove("on")}
+};
+/* results */
+function paint(){const r=last,cv=$("#cv"),x=cv.getContext("2d");
+ if(r.ev.type==="aud"){const S=r.ev.spec,cw=cv.width/S.length,ch=cv.height/64;let lo=1e9,hi=-1e9;const L=S.map(row=>row.map(v=>{const l=Math.log10(v+1e-6);lo=Math.min(lo,l);hi=Math.max(hi,l);return l}));
+  x.fillStyle="#14201c";x.fillRect(0,0,cv.width,cv.height);
+  L.forEach((row,i)=>row.forEach((l,b)=>{const t=cl((l-lo)/(hi-lo+1e-9));x.fillStyle=`rgb(${20+146*t|0},${32+208*t|0},${28+47*t|0})`;x.fillRect(i*cw,cv.height-(b+1)*ch,cw+1,ch+1)}));
+  x.fillStyle="#ff3da6";r.ev.out.forEach(i=>x.fillRect(i*cw,0,Math.max(3,cw),8));return}
+ const c=r.ev.c,m=r.ev.m;x.drawImage(c,0,0,cv.width,cv.height);
+ if(heat){x.lineWidth=2;const sx=cv.width/c.width,sy=cv.height/c.height;m.z.forEach((z,i)=>{if(z>1.3&&r.verdict!=="Likely Authentic"){const bx=(i%m.gx)*m.bs*sx,by=Math.floor(i/m.gx)*m.bs*sy,a=cl((z-1)/2.500)*.55;x.fillStyle=`rgba(255,61,166,${a})`;x.fillRect(bx,by,m.bs*sx,m.bs*sy);x.strokeStyle="rgba(255,61,166,.9)";x.strokeRect(bx+1,by+1,m.bs*sx-2,m.bs*sy-2)}})}
+}
+function report(r){const t=r.factors.slice().sort((a,b)=>b.v-a.v),k=r.kind;
+ const p=r.verdict==="Likely Authentic"?`We found no strong signs that this ${k} was generated or edited. Its texture and consistency look like natural capture.`:r.verdict==="AI-Generated"?`This ${k} shows patterns often seen in AI-generated media. The strongest signals were ${t[0].name.toLowerCase()} and ${t[1].name.toLowerCase()}.`:`Parts of this ${k} behave differently from the rest, which can indicate editing, splicing or swapped content. The strongest signal was ${t[0].name.toLowerCase()}.`;
+ const nx=r.verdict==="Likely Authentic"?"Next step: if the claim is high-stakes, still confirm the source.":"Next step: don’t share it yet. Find the original source and see if trusted outlets have it.";return[p,`Confidence ${r.conf}% is an estimate based on the checks above, not proof. ${nx}`]}
+function show(r){last=r;heat=true;
+ $("#rc").innerHTML=card(r);
+ $("#fx").innerHTML=r.factors.map(f=>{const[l,c]=lvl(f.v);return`<li><div class="h"><span>${f.name}</span><span class="lv ${c}">${l} suspicion</span></div><p>${f.d}</p><div class="meter"><i class="${c}" style="width:${Math.max(4,Math.round(f.v*100))}%"></i></div></li>`}).join("");
+ const[p,d]=report(r);$("#rp").innerHTML=`<span class="v ${r.verdict==="Likely Authentic"?"":"x"}">${r.verdict} · ${r.conf}%</span><p>${esc(p)}</p><small>${esc(d)}</small><br>`;
+ const aud=r.ev.type==="aud";$("#cv").width=aud?600:r.ev.c.width;$("#cv").height=aud?240:r.ev.c.height;
+ $("#tg").hidden=aud;$("#tg").textContent="Hide highlights";$("#cc").textContent=r.ev.cap||(r.verdict==="Likely Authentic"?"No regions flagged":"Pink areas react differently to re-compression");
+ $("#out").classList.add("on");paint();$("#out").scrollIntoView({behavior:"smooth",block:"start"});
+ $("#heroCard").innerHTML=card(r);
+}
+$("#tg").onclick=()=>{heat=!heat;$("#tg").textContent=heat?"Hide highlights":"Show highlights";paint()};
+$("#cp").onclick=async()=>{if(!last)return;const[p,d]=report(last),t=`Veridex report: ${last.name}\nVerdict: ${last.verdict} (${last.conf}% confidence)\n${p}\n${d}`;
+ try{await navigator.clipboard.writeText(t);$("#cp").textContent="Copied"}catch(e){$("#cp").textContent="Copy not allowed here"}setTimeout(()=>$("#cp").textContent="Copy report",1800)};
+/* dashboard */
+function dash(){const c=v=>mem.filter(h=>h.verdict===v).length;
+ $("#st").innerHTML=[["Total scans",mem.length],["Likely Authentic",c("Likely Authentic")],["AI-Generated",c("AI-Generated")],["Manipulated",c("Manipulated")]].map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
+ $("#hl").innerHTML=mem.length?mem.map(h=>`<li><div class="n"><b>${esc(h.name)}</b><span>${esc(h.kind)} · ${fmt(h.size)} · ${new Date(h.t).toLocaleString([],{dateStyle:"medium",timeStyle:"short"})}</span></div><div class="r">${esc(h.verdict)}<br><span style="color:var(--mut);font-weight:500">${h.conf}%</span></div></li>`).join(""):`<li class="empty">No analyses yet. Run one above and it will appear here.</li>`;
+ $("#clr").hidden=!mem.length}
+$("#clr").onclick=()=>{mem=[];save();dash()};
+dash();
+</script>
+</body>
+</html>
